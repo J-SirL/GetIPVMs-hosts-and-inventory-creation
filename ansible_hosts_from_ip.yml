@@ -43,7 +43,8 @@
       
     - name: hostnames
       debug:
-         msg: "{{ thenode_name }}"  
+         msg: "{{ thenode_name }}"
+         verbosity: 3  
 #    - debug:
 #        var: hostvars
 
@@ -51,10 +52,11 @@
     - name: Checking name
       debug:
         msg: "{{ ansible_fqdn }}"
+        verbosity: 3
 
     - name: create hosts_file
       template:
-        src: hosts.j2 
+        src: templates/hosts.j2 
         dest: /etc/my_hosts
         owner: root
         group: root
