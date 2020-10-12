@@ -1,0 +1,76 @@
+---
+- name: get name of hosts from IP address
+  hosts: localhost
+  connection: local 
+  tasks:
+    - name: check ip's
+      shell: arp -n -i virbr0 |tail -n +2 |  awk '{print $1}'
+    #      shell: nmap -n -sn 192.168.122.* -oG - | awk '/Up$/{print $2}'
+      register: active_nodes
+
+    - name: debug the nodes
+      debug:
+        msg: "{{ active_nodes.stdout_lines }}"
+        verbosity: 3   
+    - name: step nodes
+      debug:
+        msg: "{{ item }}"
+        verbosity: 3
+      loop: "{{ active_nodes.stdout_lines }}"
+        
+
+    - name: testar adda hosts
+      add_host:
+        hostname: "{{ item }}"
+        groups:
+          testar
+      loop: "{{ active_nodes.stdout_lines }}"
+ 
+- hosts: testar
+  become: yes
+  gather_facts: yes
+  #user: root
+  
+  tasks:
+
+    - name: setup inventory
+      setup: ~
+
+
+    - name: get hostname
+      command: hostname -f
+      register: thenode_name
+      
+    - name: hostnames
+      debug:
+         msg: "{{ thenode_name }}"  
+#    - debug:
+#        var: hostvars
+
+
+    - name: Checking name
+      debug:
+        msg: "{{ ansible_fqdn }}"
+
+    - name: create hosts_file
+      template:
+        src: hosts.j2 
+        dest: /etc/my_hosts
+        owner: root
+        group: root
+        mode: '0644'
+        force: yes
+      delegate_to: control
+      #become: no
+
+
+
+    - name: Create ansible inventory files
+      template:
+        src: inventory.j2 
+        dest: /home/admin/ansible/inventory
+        owner: admin
+        group: admin 
+      delegate_to: control
+
+      

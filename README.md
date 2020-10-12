@@ -1,7 +1,7 @@
-Role Name
+GetVM's host and inventory creation
 =========
 
-A brief description of the role goes here.
+An easy role to add current VM's IP's to /etc/hosts and create inventory for servers 
 
 Requirements
 ------------
