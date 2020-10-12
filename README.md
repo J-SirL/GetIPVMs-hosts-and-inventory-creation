@@ -1,7 +1,7 @@
 GetVM's host and inventory creation
 =========
 
-An easy role to add current VM's IP's to /etc/hosts and create inventory for servers 
+An easy role to add current VM's IP's to /etc/hosts and create inventory for servers
 
 Requirements
 ------------
