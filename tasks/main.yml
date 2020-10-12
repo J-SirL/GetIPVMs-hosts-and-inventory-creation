@@ -1,2 +1,37 @@
 ---
 # tasks file for GetIPVMs-hosts-and-inventory-creation
+    # Simple check for ip's connected to the virbr0 network
+    - name: check ip's
+      shell: arp -n -i virbr0 |tail -n +2 |  awk '{print $1}'
+    #      shell: nmap -n -sn 192.168.122.* -oG - | awk '/Up$/{print $2}'
+      register: active_nodes
+      run_once: True
+      delegate_to: localhost
+
+    - name: Add hosts to the group DynamicHosts
+      add_host:
+        hostname: "{{ item }}"
+        groups:
+          DynamicHosts
+      loop: "{{ active_nodes.stdout_lines }}"
+
+    - name: create hosts_file
+      template:
+        src: templates/hosts.j2 
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: '0644'
+        force: yes
+      delegate_to: "{{ delegate_host | default('control') }}"
+      #become: no
+
+
+
+    - name: Create ansible inventory files
+      template:
+        src: templates/inventory.j2 
+        dest: /home/admin/ansible/inventory
+        owner: admin
+        group: admin 
+      delegate_to:  "{{ delegate_host | default('control') }}"
