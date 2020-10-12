@@ -1,4 +1,4 @@
 ---
 # defaults file for GetIPVMs-hosts-and-inventory-creation
 # Delegate inventory and hosts to this server!
-delegate_host: 
+delegate_host: control
