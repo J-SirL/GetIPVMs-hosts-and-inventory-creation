@@ -1,77 +1,80 @@
 ---
-- name: get name of hosts from IP addresses on virbr0 network
+- name: Get name of hosts from IP addresses on virbr0 network
   hosts: localhost
-  connection: local 
+  connection: local
   tasks:
     # Simple check for ip's connected to the virbr0 network
-    - name: check ip's
-      shell: arp -n -i virbr0 |tail -n +2 |  awk '{print $1}'
-    #      shell: nmap -n -sn 192.168.122.* -oG - | awk '/Up$/{print $2}'
+    - name: Check ip's
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail &&
+          arp -n -i virbr0 |tail -n +2 |  awk '{print $1}'
+          # shell: nmap -n -sn 192.168.122.* -oG - | awk '/Up$/{print $2}'
       register: active_nodes
+      changed_when: active_nodes.rc != 0
 
-    - name: debug the nodes
-      debug:
+    - name: Debug the nodes
+      ansible.builtin.debug:
         msg: "{{ active_nodes.stdout_lines }}"
-        verbosity: 3   
-    - name: step nodes
-      debug:
+        verbosity: 3
+
+    - name: Step nodes
+      ansible.builtin.debug:
         msg: "{{ item }}"
         verbosity: 3
       loop: "{{ active_nodes.stdout_lines }}"
-        
 
     - name: Add hosts to the group DynamicHosts
-      add_host:
+      ansible.builtin.add_host:
         hostname: "{{ item }}"
         groups:
           DynamicHosts
       loop: "{{ active_nodes.stdout_lines }}"
- 
-- hosts: DynamicHosts
-  become: yes
-  gather_facts: yes
+
+- name: Add dynamic hosts
+  hosts: DynamicHosts
+  become: true
+  gather_facts: true
   tasks:
 
-    - name: setup inventory
-      setup: ~
+    - name: Setup inventory
+      ansible.builtin.setup: ~
 
 
-    - name: get hostname
-      command: hostname -f
+    - name: Get hostname
+      ansible.builtin.command: hostname -f
       register: thenode_name
-      
-    - name: hostnames
-      debug:
-         msg: "{{ thenode_name }}"
-         verbosity: 3  
+      changed_when: thenode_name.rc != 0
+
+    - name: Hostnames
+      ansible.builtin.debug:
+        msg: "{{ thenode_name }}"
+        verbosity: 3
+
 #    - debug:
 #        var: hostvars
 
 
     - name: Checking name
-      debug:
+      ansible.builtin.debug:
         msg: "{{ ansible_fqdn }}"
         verbosity: 3
 
-    - name: create hosts_file
-      template:
-        src: templates/hosts.j2 
+    - name: Create hosts_file
+      ansible.builtin.template:
+        src: templates/hosts.j2
         dest: /etc/hosts
         owner: root
         group: root
         mode: '0644'
-        force: yes
+        force: true
       delegate_to: "{{ delegate_host | default('control') }}"
-      #become: no
-
-
 
     - name: Create ansible inventory files
-      template:
-        src: templates/inventory.j2 
-        dest: /home/admin/ansible/inventory
-        owner: admin
-        group: admin 
+      ansible.builtin.template:
+        src: templates/inventory.j2
+        dest: /home/jsorell/ansible-inventory
+        owner: jsorell
+        group: jsorell
+        mode: '0640'
       delegate_to: "{{ delegate_host | default('control') }}"
-
-      
